@@ -20,11 +20,11 @@ for factura in facturas:
   # Actualizamos tabla de contadores de productos relacionados.
   for tupla in lista_tuplas:
     session.execute(
-              "UPDATE productos_relacionados " +
+              "UPDATE contador_prod_vendidos_juntos " +
 							"SET numero_compras = numero_compras + 1" + 
 							"WHERE producto = " + str(tupla[0]) +  " AND producto_rel = " + str(tupla[1]))
     session.execute(
-              "UPDATE productos_relacionados " +
+              "UPDATE contador_prod_vendidos_juntos " +
 							"SET numero_compras = numero_compras + 1" + 
 							"WHERE producto = " + str(tupla[1]) +  " AND producto_rel = " + str(tupla[0]))
 
