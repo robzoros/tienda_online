@@ -6,6 +6,7 @@ from uuid import uuid1
 from string import (ascii_lowercase, ascii_uppercase)
 from cassandra.query import (BatchStatement, BatchType)
 from cassandra.cluster import Cluster
+from cassandra.util import uuid_from_time
 
 # Conectamos al Cluster
 cluster = Cluster()
@@ -24,9 +25,7 @@ for cat in ['Media', 'Aparatos', 'Smartphones', 'Libros', 'Ropa', 'Juegos', 'Jug
 
 
 session.execute("TRUNCATE productos")
-session.execute("TRUNCATE productos_por_fecha")
 session.execute("TRUNCATE productos_por_marketing")
-session.execute("TRUNCATE productos_por_ventas")
 session.execute("TRUNCATE productos_por_categoria")
 session.execute("TRUNCATE productos_por_categoria_en")
 session.execute("TRUNCATE productos_por_categoria_fr")
@@ -35,7 +34,6 @@ session.execute("TRUNCATE productos_por_precio")
 # Cargamos tabla de productos
 for i in range(100):
 	# Damos valor a las columnas de las diferentes tablas
-	codigo_referencia = uuid1()
 	nombre_producto_es = random.choice(ascii_uppercase) + ''.join(random.choice(ascii_lowercase) for _ in range(random.randint(5, 12)))
 	nombre_producto_en = random.choice(ascii_uppercase) + ''.join(random.choice(ascii_lowercase) for _ in range(random.randint(5, 12)))
 	nombre_producto_fr = random.choice(ascii_uppercase) + ''.join(random.choice(ascii_lowercase) for _ in range(random.randint(5, 12)))
@@ -52,26 +50,23 @@ for i in range(100):
 	nombre_categoria = {'es': nombre_categoria_es, 'en': nombre_categoria_en, 'fr': nombre_categoria_fr }
 
 	timestamp_producto = random_date(start, end)
-	alta_producto = timestamp_producto.strftime("%Y-%m")
+	alta_producto = timestamp_producto.strftime("%Y")
+	codigo_referencia = uuid_from_time(timestamp_producto)
 
 	timestamp_marketing = random_date(start, end)
-	alta_marketing = timestamp_marketing.strftime("%Y-%m")
+	tag_marketing = ''.join(random.choice(ascii_uppercase) for _ in range(10))
 
 	ventas_en_miles = random.randint(0, 15)
 	numero_ventas = ventas_en_miles * 1000 + random.randint(0, 999)
 
 	batch = BatchStatement(BatchType.LOGGED)
-	prepared = session.prepare("INSERT INTO productos (codigo_referencia, nombre_producto, precio_producto, descripcion, url_imagen, categoria)" +
-		                         " VALUES (?, ?, " + "{:0.2f}".format(precio_producto) + ", ?, ?, ?)")
-	batch.add(prepared, (codigo_referencia, nombre_producto, descripcion, url_imagen, categoria))
-	prepared = session.prepare("INSERT INTO productos_por_fecha " + 
-														 "(codigo_referencia, timestamp_producto, alta_producto, nombre_producto, " + 
-		                         " precio_producto, descripcion, url_imagen) VALUES (?, ?, ?, ?, " + "{:0.2f}".format(precio_producto) + ", ?, ?)")
-	batch.add(prepared, (codigo_referencia, timestamp_producto, alta_producto, nombre_producto, descripcion, url_imagen))
+	prepared = session.prepare("INSERT INTO productos (codigo_referencia, nombre_producto, alta_producto, precio_producto, descripcion, url_imagen, categoria)" +
+		                         " VALUES (?, ?, ?, " + "{:0.2f}".format(precio_producto) + ", ?, ?, ?)")
+	batch.add(prepared, (codigo_referencia, nombre_producto, alta_producto, descripcion, url_imagen, categoria))
 	prepared = session.prepare("INSERT INTO productos_por_marketing " + 
-														 "(codigo_referencia, timestamp_marketing, alta_marketing, nombre_producto, " + 
+														 "(codigo_referencia, timestamp_marketing, tag_marketing, nombre_producto, " + 
 		                         " precio_producto, descripcion, url_imagen) VALUES (?, ?, ?, ?, " + "{:0.2f}".format(precio_producto) + ", ?, ?)")
-	batch.add(prepared, (codigo_referencia, timestamp_marketing, alta_marketing, nombre_producto, descripcion, url_imagen))
+	batch.add(prepared, (codigo_referencia, timestamp_marketing, tag_marketing, nombre_producto, descripcion, url_imagen))
 	prepared = session.prepare("INSERT INTO productos_por_ventas " + 
 														 "(codigo_referencia, ventas_en_miles, numero_ventas, nombre_producto, " + 
 		                         " precio_producto, descripcion, url_imagen) VALUES (?, ?, ?, ?, " + "{:0.2f}".format(precio_producto) + ", ?, ?)")

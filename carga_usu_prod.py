@@ -25,6 +25,7 @@ session.execute("TRUNCATE productos_visitados")
 session.execute("TRUNCATE carro")
 session.execute("TRUNCATE compras")
 session.execute("TRUNCATE compras_detalle")
+session.execute("TRUNCATE contador_productos_vendidos")
 
 usuarios = session.execute('SELECT * FROM usuarios')
 for usuario in usuarios:
@@ -72,6 +73,10 @@ for usuario in usuarios:
     								"(usuario_id, factura, fecha_compra, codigo_referencia, nombre_producto, cantidad, precio_producto, importe, url_imagen) " + 
     								"VALUES (?, ?, ?, ?, ?, ?, ?," + "{:0.2f}".format(importe) + ", ? )")
         batch.add(prepared, tupla_cd)
+        session.execute(
+              "UPDATE contador_productos_vendidos " +
+							"SET numero_ventas = numero_ventas + " + cantidad + " " + 
+							"WHERE producto = " + str(producto[0]))
 
     # Compra
     sentencia = session.prepare("INSERT INTO compras " +

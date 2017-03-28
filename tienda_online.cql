@@ -3,6 +3,9 @@ DROP KEYSPACE tienda_online;
 CREATE KEYSPACE tienda_online
 WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };
 
+-- *************************************************
+-- USUARIOS Y COMPRAS
+-- *************************************************
 -- Datos de usuarios
 CREATE TABLE tienda_online.usuarios (
   usuario_id UUID PRIMARY KEY,
@@ -56,10 +59,24 @@ CREATE TABLE tienda_online.compras_detalle (
   url_imagen TEXT,
   PRIMARY KEY(factura, codigo_referencia)
 );
+-- *************************************************
+-- FIN USUARIOS Y COMPRAS
+-- *************************************************
 
--- Tabla de productos. Es la tabla que se consulará en la página de productos.
+
+-- *************************************************
+--  PRODUCTOS
+-- *************************************************
+
+-- Tabla de productos. Es la tabla que se consulará en la página de productos. 
+-- Para poder crear una vista materializada y mantener el orden de los productos el código de referencia es de tipo TIMEUUID
+-- Alta producto es un bucket que se ajusta a la periodicidad de alta de nuevos productos
+-- Si se añaden muchos productos diariamente el bucket podría ser un Date. En otros casos el Bucket podría ser semanal o mensual
+-- Nombre producto y descripción son un de tipo MAP que tendrán el formato KEY, VALUE en el que KEY será el código de idioma según ISO 639-1
+-- y VALUE el producto o la descripción en dicho idioma.
 CREATE TABLE tienda_online.productos (
-  codigo_referencia UUID,
+  codigo_referencia TIMEUUID,
+  alta_producto TEXT,
   nombre_producto MAP<TEXT, TEXT>,
   precio_producto DECIMAL,
   descripcion MAP<TEXT, TEXT>,
@@ -68,59 +85,93 @@ CREATE TABLE tienda_online.productos (
   PRIMARY KEY(codigo_referencia)
 );
 
--- Tabla de productos (ordenados por fecha de alta). Alta producto es un bucket que se ajusta a la periodicidad de alta de nuevos productos
--- Si se añaden muchos productos diariamente el bucket podría ser un Date. En otros casos el Bucket podría ser semanal o mensual
-CREATE TABLE tienda_online.productos_por_fecha (
-  codigo_referencia UUID,
-  timestamp_producto TIMESTAMP,
-  alta_producto TEXT,
-  nombre_producto MAP<TEXT, TEXT>,
-  precio_producto DECIMAL,
-  descripcion MAP<TEXT, TEXT>,
-  url_imagen TEXT,
-  PRIMARY KEY(alta_producto, timestamp_producto, codigo_referencia)
-) WITH CLUSTERING ORDER BY (timestamp_producto DESC);
+-- Para obtener los últimos productos dados de alta y los productos seleccionados por marketing creamos dos vistas materializadas.
+-- Tabla de productos (ordenados por fecha de alta).
+CREATE MATERIALIZED VIEW tienda_online.productos_por_fecha AS
+  SELECT codigo_referencia, alta_producto, nombre_producto, precio_producto, descripcion, url_imagen 
+  FROM tienda_online.productos
+  WHERE alta_producto IS NOT NULL AND timestamp_producto IS NOT NULL
+  PRIMARY KEY (alta_producto, codigo_referencia)
+  WITH CLUSTERING ORDER BY (codigo_referencia DESC);
 
--- Tabla de productos seleccionados por marketing (ordenados por fecha). Alta marketing es un bucket que se ajusta a la periodicidad 
--- de alta de nuevos productos seleccionados por Marketing.
--- Si se añaden muchos productos diariamente el bucket podría ser un Date. En otros casos el Bucket podría ser semanal o mensual
+-- Tag marketing es un bucket que agrupa los productos seleccionados por marketing. 
+-- Se supone que existe un Tag de Marketing actual y que es conocido por el sistema.
+-- Se usa el tag ya que suponemos que se desea guardar un histórico de los productos seleccionados por marketing
+-- Usamos timestamp_marketing ya que suponemos que el tag estará "vivo" durante un tiempo pudiendo
+-- tener un número indeterminado de productos.
 CREATE TABLE tienda_online.productos_por_marketing (
-  codigo_referencia UUID,
+  codigo_referencia TIMEUUID,
   timestamp_marketing TIMESTAMP,
-  alta_marketing TEXT,
+  tag_marketing TEXT,
   nombre_producto MAP<TEXT, TEXT>,
   precio_producto DECIMAL,
   descripcion MAP<TEXT, TEXT>,
   url_imagen TEXT,
-  PRIMARY KEY(alta_marketing, timestamp_marketing, codigo_referencia)
+  PRIMARY KEY(tag_marketing, timestamp_marketing, codigo_referencia)
 ) WITH CLUSTERING ORDER BY (timestamp_marketing DESC);
 
 
--- Tabla de productos ordenados por número de ventas. Se utiliza un bucket de ventas por miles para distribuir los registros
-CREATE TABLE tienda_online.productos_por_ventas (
-  codigo_referencia UUID,
+-- En Cassandra, ordenar por valores que no son columnas de cluster es un anti patrón.
+-- Para obtener los productos más vendidos propongo llevar un contador de las ventas de cada producto.
+-- Un proceso batch que correría cada día, semana, cada 4 horas, según periodicidad acordada con negocio
+-- se encargaría de recorrer la tabla con el contador y dejar en otra tabla los N productos más vendidos.
+
+-- Tabla con los productos que se compran juntos
+CREATE TABLE tienda_online.contador_productos_vendidos	 (
+  codigo_referencia TIMEUUID,
+	numero_ventas counter, 
+	PRIMARY KEY(codigo_referencia)
+);
+
+-- Tabla con los productos más vendidos (sólo tendría los N productos más vendidos siendo N un número determinado 
+-- por negocio, en nuestro caso 8, pero que sería parametrizable)
+CREATE TABLE tienda_online.productos_mas_vendidos	 (
+  codigo_referencia TIMEUUID,
   nombre_producto MAP<TEXT, TEXT>,
   precio_producto DECIMAL,
   descripcion MAP<TEXT, TEXT>,
-  ventas_en_miles INT,
-  numero_ventas INT,
   url_imagen TEXT,
-  PRIMARY KEY(ventas_en_miles, numero_ventas, codigo_referencia)
-) WITH CLUSTERING ORDER BY (numero_ventas DESC);
+	numero_ventas bigint, 
+	PRIMARY KEY(codigo_referencia)
+);
 
+
+-- En el Caso de obtener los productos que más se han vendido junto a un determinado producto sería un caso similar, por ser igualmente un antipatrón
 -- Tabla con los productos que se compran juntos
-CREATE TABLE tienda_online.productos_relacionados	 (
-  producto UUID,
- 	producto_rel UUID,
-	numero_compras counter, 
+CREATE TABLE tienda_online.contador_prod_vendidos_juntos	 (
+  producto TIMEUUID,
+ 	producto_rel TIMEUUID,
+	numero_ventas counter, 
 	PRIMARY KEY(producto, producto_rel)
 );
 
+-- Tabla con los productos más vendidos (sólo tendría los N productos más vendidos junto a cada producto, 
+-- siendo N un número determinado por negocio, en nuestro caso 4, pero sería parametrizable)
+CREATE TABLE tienda_online.productos_vendidos_juntos	 (
+  producto TIMEUUID,
+ 	producto_rel TIMEUUID,
+  nombre_producto MAP<TEXT, TEXT>,
+  precio_producto DECIMAL,
+  descripcion MAP<TEXT, TEXT>,
+  url_imagen TEXT,
+	numero_ventas bigint, 
+	PRIMARY KEY(producto, numero_ventas, producto_rel)
+) WITH CLUSTERING ORDER BY (numero_ventas DESC);
+
+-- *************************************************
+--  FIN PRODUCTOS
+-- *************************************************
+
+-- *************************************************
+--  CATEGORIAS
+-- *************************************************
+-- Para ordenar los productos por nombre o precio hay que crear una tabla por cada orden diferente que se quiere.
+-- En el caso de tener multiidioma habrá que tener una tabla por cada idioma por el que se quiera ordenar.
 
 -- Tabla con los productos por categoría en el idioma por defecto (español) ordenados por Nombre Producto
 CREATE TABLE tienda_online.productos_por_categoria (
   categoria UUID,
-  codigo_referencia UUID,
+  codigo_referencia TIMEUUID,
   nombre_categoria TEXT static,
   nombre_producto TEXT,
   precio_producto DECIMAL,
@@ -131,7 +182,7 @@ CREATE TABLE tienda_online.productos_por_categoria (
 -- Tabla con los productos por categoría en inglés ordenados por Nombre Producto
 CREATE TABLE tienda_online.productos_por_categoria_en (
   categoria UUID,
-  codigo_referencia UUID,
+  codigo_referencia TIMEUUID,
   nombre_categoria TEXT static,
   nombre_producto TEXT,
   precio_producto DECIMAL,
@@ -142,7 +193,7 @@ CREATE TABLE tienda_online.productos_por_categoria_en (
 -- Tabla con los productos por categoría en francés ordenados por Nombre Producto
 CREATE TABLE tienda_online.productos_por_categoria_fr (
   categoria UUID,
-  codigo_referencia UUID,
+  codigo_referencia TIMEUUID,
   nombre_categoria TEXT static,
   nombre_producto TEXT,
   precio_producto DECIMAL,
@@ -153,10 +204,14 @@ CREATE TABLE tienda_online.productos_por_categoria_fr (
 -- Tabla con los productos por categoría ordenados por PRECIO
 CREATE TABLE tienda_online.productos_por_precio (
   categoria UUID,
-  codigo_referencia UUID,
+  codigo_referencia TIMEUUID,
   nombre_categoria MAP<TEXT, TEXT> static,
   nombre_producto MAP<TEXT, TEXT>,
   precio_producto DECIMAL,
   url_imagen TEXT,
   PRIMARY KEY(categoria, precio_producto, codigo_referencia)
 ) WITH CLUSTERING ORDER BY (precio_producto ASC);
+
+-- *************************************************
+--  FIN CATEGORIAS
+-- *************************************************
