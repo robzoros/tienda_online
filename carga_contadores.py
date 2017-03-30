@@ -17,9 +17,9 @@ result = session.execute('SELECT * FROM contador_productos_vendidos')
 productos_vendidos = sorted(result, key=lambda p: -1 * p.numero_ventas)[1:8]
 for producto in productos_vendidos:
     prod = session.execute('SELECT * FROM productos WHERE codigo_referencia = ' + str(producto.codigo_referencia))[0]
-    prepared = session.prepare("INSERT INTO productos_mas_vendidos (codigo_referencia, nombre_producto, precio_producto, descripcion, url_imagen, numero_ventas)" +
-                                 " VALUES (?, ?, " + "{:0.2f}".format(prod.precio_producto) + ", ?, ?, ?)")
-    session.execute(prepared, (prod.codigo_referencia, prod.nombre_producto, prod.descripcion, prod.url_imagen, producto.numero_ventas))
+    prepared = session.prepare("INSERT INTO productos_mas_vendidos (codigo_referencia, nombre_producto, precio_producto, url_imagen, numero_ventas)" +
+                                 " VALUES (?, ?, " + "{:0.2f}".format(prod.precio_producto) + ", ?, ?)")
+    session.execute(prepared, (prod.codigo_referencia, prod.nombre_producto, prod.url_imagen, producto.numero_ventas))
 
 
 productos = session.execute('SELECT * FROM productos')
@@ -30,8 +30,8 @@ for producto in productos:
     for prod in productos_rel:
         prod_rel = session.execute('SELECT * FROM productos WHERE codigo_referencia = ' + str(prod.producto_rel))[0]
 
-        prepared = session.prepare("INSERT INTO productos_vendidos_juntos (producto, producto_rel, nombre_producto, precio_producto, descripcion, url_imagen, numero_ventas)" +
-                                     " VALUES (?, ?, ?, " + "{:0.2f}".format(producto.precio_producto) + ", ?, ?, ?)")
-        session.execute(prepared, (producto.codigo_referencia, prod_rel.codigo_referencia, prod_rel.nombre_producto, prod_rel.descripcion, prod_rel.url_imagen, prod.numero_ventas))
+        prepared = session.prepare("INSERT INTO productos_vendidos_juntos (producto, producto_rel, nombre_producto, precio_producto, url_imagen, numero_ventas)" +
+                                     " VALUES (?, ?, ?, " + "{:0.2f}".format(producto.precio_producto) + ", ?, ?)")
+        session.execute(prepared, (producto.codigo_referencia, prod_rel.codigo_referencia, prod_rel.nombre_producto, prod_rel.url_imagen, prod.numero_ventas))
 
     

@@ -62,23 +62,14 @@ for i in range(100):
 	batch.add(prepared, (codigo_referencia, nombre_producto, alta_producto, descripcion, url_imagen, categoria))
 	prepared = session.prepare("INSERT INTO productos_por_marketing " + 
 														 "(codigo_referencia, timestamp_marketing, tag_marketing, nombre_producto, " + 
-		                         " precio_producto, descripcion, url_imagen) VALUES (?, ?, ?, ?, " + "{:0.2f}".format(precio_producto) + ", ?, ?)")
-	batch.add(prepared, (codigo_referencia, timestamp_marketing, tag_marketing, nombre_producto, descripcion, url_imagen))
+		                         " precio_producto, url_imagen) VALUES (?, ?, ?, ?, " + "{:0.2f}".format(precio_producto) + ", ?)")
+	batch.add(prepared, (codigo_referencia, timestamp_marketing, tag_marketing, nombre_producto, url_imagen))
 
-	prepared = session.prepare("INSERT INTO productos_por_categoria (categoria, codigo_referencia, nombre_categoria, nombre_producto, precio_producto, url_imagen)" +
-		                         " VALUES (?, ?, ?, ?, " + "{:0.2f}".format(precio_producto) + ", ?)")
-	batch.add(prepared, (categoria, codigo_referencia, nombre_categoria_es, nombre_producto_es, url_imagen))
-	prepared = session.prepare("INSERT INTO productos_por_categoria_en (categoria, codigo_referencia, nombre_categoria, nombre_producto, precio_producto, url_imagen)" +
-		                         " VALUES (?, ?, ?, ?, " + "{:0.2f}".format(precio_producto) + ", ?)")
-	batch.add(prepared, (categoria, codigo_referencia, nombre_categoria_en, nombre_producto_en, url_imagen))
-	prepared = session.prepare("INSERT INTO productos_por_categoria_fr (categoria, codigo_referencia, nombre_categoria, nombre_producto, precio_producto, url_imagen)" +
-		                         " VALUES (?, ?, ?, ?, " + "{:0.2f}".format(precio_producto) + ", ?)")
-	batch.add(prepared, (categoria, codigo_referencia, nombre_categoria_fr, nombre_producto_fr, url_imagen))
-
-	prepared = session.prepare("INSERT INTO productos_por_precio (categoria, codigo_referencia, nombre_categoria, nombre_producto, precio_producto, url_imagen)" +
-		                         " VALUES (?, ?, ?, ?, " + "{:0.2f}".format(precio_producto) + ", ?)")
-	batch.add(prepared, (categoria, codigo_referencia, nombre_categoria, nombre_producto, url_imagen))
-
+	prepared = session.prepare("INSERT INTO categorias (categoria, codigo_referencia, nombre_categoria_es, nombre_categoria_en, nombre_categoria_fr, " + 
+                             "nombre_producto_es, nombre_producto_en, nombre_producto_fr, precio_producto, url_imagen)" +
+		                         " VALUES (?, ?, ?, ?, ?, ?, ?, ?, " + "{:0.2f}".format(precio_producto) + ", ?)")
+	batch.add(prepared, (categoria, codigo_referencia, nombre_categoria_es, nombre_categoria_en, nombre_categoria_fr, 
+		 									 nombre_producto_es, nombre_producto_en, nombre_producto_fr, url_imagen))
 	session.execute(batch)
 
 #******************************************************
