@@ -51,7 +51,7 @@ for i in range(100):
 	codigo_referencia = uuid_from_time(timestamp_producto)
 
 	timestamp_marketing = random_date(start, end)
-	tag_marketing = ''.join(random.choice(ascii_uppercase) for _ in range(10))
+	if (random.randint(1,10) > 6) tag_marketing = ''.join(random.choice(ascii_uppercase) for _ in range(10))
 
 	batch = BatchStatement(BatchType.LOGGED)
 	prepared = session.prepare("INSERT INTO productos (codigo_referencia, nombre_producto, alta_producto, precio_producto, descripcion, url_imagen, categoria)" +
