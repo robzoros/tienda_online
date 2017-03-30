@@ -26,10 +26,7 @@ for cat in ['Media', 'Aparatos', 'Smartphones', 'Libros', 'Ropa', 'Juegos', 'Jug
 
 session.execute("TRUNCATE productos")
 session.execute("TRUNCATE productos_por_marketing")
-session.execute("TRUNCATE productos_por_categoria")
-session.execute("TRUNCATE productos_por_categoria_en")
-session.execute("TRUNCATE productos_por_categoria_fr")
-session.execute("TRUNCATE productos_por_precio")
+session.execute("TRUNCATE categorias")
 
 # Cargamos tabla de productos
 for i in range(100):
