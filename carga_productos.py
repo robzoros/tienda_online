@@ -19,8 +19,8 @@ session = cluster.connect('tienda_online')
 # Creamos categorías
 categorias = []
 for cat in ['Media', 'Aparatos', 'Smartphones', 'Libros', 'Ropa', 'Juegos', 'Juguetes', 'Muebles']:
-	cat_en = cat[0] + ''.join(random.choice(cat[1::]) for _ in range(random.randint(0, len(cat) - 1)))
-	cat_fr = cat[0] + ''.join(random.choice(cat[1::]) for _ in range(random.randint(0, len(cat) - 1)))
+	cat_en = cat[0] + ''.join(random.choice(cat[1::]) for _ in range(random.randint(2, len(cat) - 1)))
+	cat_fr = cat[0] + ''.join(random.choice(cat[1::]) for _ in range(random.randint(2, len(cat) - 1)))
 	categorias.append((uuid1(), cat, cat_en, cat_fr))
 
 
@@ -30,8 +30,7 @@ session.execute("TRUNCATE categorias")
 
 # Cargamos tabla de productos
 # Inicializamos tag
-tag_marketing = ''.join(random.choice(ascii_uppercase) for _ in range(10))
-contador = 0
+tags_marketing = ['NAVIDAD', 'REYES', 'REBAJAS', 'SAN VALENTIN', 'PASCUA', 'VERANO', 'REBAJAS VERANO', 'BLACK FRIDAY']
 for i in range(100):
 	# Damos valor a las columnas de las diferentes tablas
 	nombre_producto_es = random.choice(ascii_uppercase) + ''.join(random.choice(ascii_lowercase) for _ in range(random.randint(5, 12)))
@@ -54,10 +53,7 @@ for i in range(100):
 	codigo_referencia = uuid_from_time(timestamp_producto)
 
 	timestamp_marketing = random_date(start, end)
-	contador += 1
-	if (contador > 10):
-		contador = 0
-		tag_marketing = ''.join(random.choice(ascii_uppercase) for _ in range(10))
+	tag_marketing = random.choice(tags_marketing)
 
 	batch = BatchStatement(BatchType.LOGGED)
 	prepared = session.prepare("INSERT INTO productos (codigo_referencia, nombre_producto, alta_producto, precio_producto, descripcion, url_imagen, categoria)" +
