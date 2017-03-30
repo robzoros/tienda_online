@@ -234,7 +234,7 @@ CREATE MATERIALIZED VIEW tienda_online.categorias_por_precio AS
   SELECT nombre_categoria_es, nombre_categoria_en, nombre_categoria_fr, 
          nombre_producto_es, nombre_producto_en, nombre_producto_fr, precio_producto, url_imagen 
   FROM tienda_online.categorias
-  WHERE nombre_producto_fr IS NOT NULL AND codigo_referencia IS NOT NULL
+  WHERE precio_producto IS NOT NULL AND codigo_referencia IS NOT NULL
   PRIMARY KEY (categoria, precio_producto, codigo_referencia)
   WITH CLUSTERING ORDER BY (precio_producto ASC);
 
