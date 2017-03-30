@@ -90,7 +90,7 @@ CREATE TABLE tienda_online.productos (
 CREATE MATERIALIZED VIEW tienda_online.productos_por_fecha AS
   SELECT codigo_referencia, alta_producto, nombre_producto, precio_producto, descripcion, url_imagen 
   FROM tienda_online.productos
-  WHERE alta_producto IS NOT NULL AND timestamp_producto IS NOT NULL
+  WHERE alta_producto IS NOT NULL
   PRIMARY KEY (alta_producto, codigo_referencia)
   WITH CLUSTERING ORDER BY (codigo_referencia DESC);
 

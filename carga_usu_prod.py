@@ -73,10 +73,11 @@ for usuario in usuarios:
     								"(usuario_id, factura, fecha_compra, codigo_referencia, nombre_producto, cantidad, precio_producto, importe, url_imagen) " + 
     								"VALUES (?, ?, ?, ?, ?, ?, ?," + "{:0.2f}".format(importe) + ", ? )")
         batch.add(prepared, tupla_cd)
-        session.execute(
+        prepared = session.prepare(
               "UPDATE contador_productos_vendidos " +
-							"SET numero_ventas = numero_ventas + " + cantidad + " " + 
-							"WHERE producto = " + str(producto[0]))
+							"SET numero_ventas = numero_ventas + ? " + 
+							"WHERE codigo_referencia = ?")
+        session.execute(prepared, (cantidad, producto[0]))
 
     # Compra
     sentencia = session.prepare("INSERT INTO compras " +

@@ -56,9 +56,6 @@ for i in range(100):
 	timestamp_marketing = random_date(start, end)
 	tag_marketing = ''.join(random.choice(ascii_uppercase) for _ in range(10))
 
-	ventas_en_miles = random.randint(0, 15)
-	numero_ventas = ventas_en_miles * 1000 + random.randint(0, 999)
-
 	batch = BatchStatement(BatchType.LOGGED)
 	prepared = session.prepare("INSERT INTO productos (codigo_referencia, nombre_producto, alta_producto, precio_producto, descripcion, url_imagen, categoria)" +
 		                         " VALUES (?, ?, ?, " + "{:0.2f}".format(precio_producto) + ", ?, ?, ?)")
@@ -67,10 +64,6 @@ for i in range(100):
 														 "(codigo_referencia, timestamp_marketing, tag_marketing, nombre_producto, " + 
 		                         " precio_producto, descripcion, url_imagen) VALUES (?, ?, ?, ?, " + "{:0.2f}".format(precio_producto) + ", ?, ?)")
 	batch.add(prepared, (codigo_referencia, timestamp_marketing, tag_marketing, nombre_producto, descripcion, url_imagen))
-	prepared = session.prepare("INSERT INTO productos_por_ventas " + 
-														 "(codigo_referencia, ventas_en_miles, numero_ventas, nombre_producto, " + 
-		                         " precio_producto, descripcion, url_imagen) VALUES (?, ?, ?, ?, " + "{:0.2f}".format(precio_producto) + ", ?, ?)")
-	batch.add(prepared, (codigo_referencia, ventas_en_miles, numero_ventas, nombre_producto, descripcion, url_imagen))
 
 	prepared = session.prepare("INSERT INTO productos_por_categoria (categoria, codigo_referencia, nombre_categoria, nombre_producto, precio_producto, url_imagen)" +
 		                         " VALUES (?, ?, ?, ?, " + "{:0.2f}".format(precio_producto) + ", ?)")

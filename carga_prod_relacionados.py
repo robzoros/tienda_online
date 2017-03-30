@@ -4,7 +4,7 @@ from cassandra.cluster import Cluster
 # Conectamos al Cluster
 cluster = Cluster()
 session = cluster.connect('tienda_online')
-session.execute("TRUNCATE productos_relacionados")
+session.execute("TRUNCATE contador_prod_vendidos_juntos")
 
 #******************************************************
 #          PRODUCTOS RELACIONADOS EN COMPRAS
@@ -20,12 +20,12 @@ for factura in facturas:
   # Actualizamos tabla de contadores de productos relacionados.
   for tupla in lista_tuplas:
     session.execute(
-              "UPDATE productos_relacionados " +
-							"SET numero_compras = numero_compras + 1" + 
+              "UPDATE contador_prod_vendidos_juntos " +
+							"SET numero_ventas = numero_ventas + 1 " + 
 							"WHERE producto = " + str(tupla[0]) +  " AND producto_rel = " + str(tupla[1]))
     session.execute(
-              "UPDATE productos_relacionados " +
-							"SET numero_compras = numero_compras + 1" + 
+              "UPDATE contador_prod_vendidos_juntos " +
+							"SET numero_ventas = numero_ventas + 1 " + 
 							"WHERE producto = " + str(tupla[1]) +  " AND producto_rel = " + str(tupla[0]))
 
   
