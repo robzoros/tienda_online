@@ -31,6 +31,7 @@ session.execute("TRUNCATE categorias")
 # Cargamos tabla de productos
 # Inicializamos tag
 tag_marketing = ''.join(random.choice(ascii_uppercase) for _ in range(10))
+contador = 0
 for i in range(100):
 	# Damos valor a las columnas de las diferentes tablas
 	nombre_producto_es = random.choice(ascii_uppercase) + ''.join(random.choice(ascii_lowercase) for _ in range(random.randint(5, 12)))
@@ -53,7 +54,8 @@ for i in range(100):
 	codigo_referencia = uuid_from_time(timestamp_producto)
 
 	timestamp_marketing = random_date(start, end)
-	if (random.randint(1,10) > 6):
+	contador += 1
+	if (contador > 10):
 		tag_marketing = ''.join(random.choice(ascii_uppercase) for _ in range(10))
 
 	batch = BatchStatement(BatchType.LOGGED)
