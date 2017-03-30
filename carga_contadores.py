@@ -14,7 +14,7 @@ session.execute("TRUNCATE productos_mas_vendidos")
 session.execute("TRUNCATE productos_vendidos_juntos")
 
 result = session.execute('SELECT * FROM contador_productos_vendidos')
-productos_vendidos = sorted(result, key=lambda p: -1 * p.numero_ventas)[1:8]
+productos_vendidos = sorted(result, key=lambda p: -1 * p.numero_ventas)[0:8]
 for producto in productos_vendidos:
     prod = session.execute('SELECT * FROM productos WHERE codigo_referencia = ' + str(producto.codigo_referencia))[0]
     prepared = session.prepare("INSERT INTO productos_mas_vendidos (codigo_referencia, nombre_producto, precio_producto, url_imagen, numero_ventas)" +

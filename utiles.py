@@ -10,8 +10,8 @@ def random_date(start, end):
   random_second = randrange(int_delta)
   return start + timedelta(seconds=random_second)
 
-start = datetime.strptime('1/1/2008 1:30 PM', '%m/%d/%Y %I:%M %p')
-end = datetime.strptime('1/1/2017 9:30 PM', '%m/%d/%Y %I:%M %p')
+start = datetime.strptime('1/1/2015 1:30 PM', '%m/%d/%Y %I:%M %p')
+end = datetime.strptime('1/4/2017 19:30 PM', '%m/%d/%Y %I:%M %p')
 		
 # Producto cartesiano de tuplas para salvar productos relacionados
 # Función que rellena una lista de productos y luego llama a la función productoCartesiano para obtener la lista definitiva.
