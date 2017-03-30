@@ -56,6 +56,7 @@ for i in range(100):
 	timestamp_marketing = random_date(start, end)
 	contador += 1
 	if (contador > 10):
+		contador = 0
 		tag_marketing = ''.join(random.choice(ascii_uppercase) for _ in range(10))
 
 	batch = BatchStatement(BatchType.LOGGED)
