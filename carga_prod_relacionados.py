@@ -7,11 +7,11 @@ session = cluster.connect('tienda_online')
 session.execute("TRUNCATE contador_prod_vendidos_juntos")
 
 #******************************************************
-#          PRODUCTOS RELACIONADOS EN COMPRAS
+#          PRODUCTOS RELACIONADOS EN PEDIDOS
 #******************************************************
 
-# Recorremos todas las compras
-facturas = session.execute("SELECT factura FROM compras")
+# Recorremos todas los pedidos
+facturas = session.execute("SELECT factura FROM pedidos")
 
 for factura in facturas:
   #obtenemos todos los productos de la compra y creamos una lista de tuplas producto = producto relacionado

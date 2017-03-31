@@ -23,8 +23,7 @@ for producto in productos:
 
 session.execute("TRUNCATE productos_visitados")
 session.execute("TRUNCATE carro")
-session.execute("TRUNCATE compras")
-session.execute("TRUNCATE compras_detalle")
+session.execute("TRUNCATE pedidos")
 session.execute("TRUNCATE contador_productos_vendidos")
 
 usuarios = session.execute('SELECT * FROM usuarios')
@@ -56,7 +55,7 @@ for usuario in usuarios:
 
   importe = 0
   lista_p2 = []
-  # Cargamos tabla de compras
+  # Cargamos tabla de pedidos
   for cont_compra in range(0, 8):
     factura = ''.join(random.choice(ascii_uppercase) for _ in range(12))
     fecha = random_date(start, end)
