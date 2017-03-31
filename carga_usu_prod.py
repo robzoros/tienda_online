@@ -69,7 +69,7 @@ for usuario in usuarios:
         cantidad = random.randint(1,3)
         importe += round(cantidad * producto[2], 2)
         tupla_cd = (usuario.usuario_id, factura, fecha, producto[0], producto[1], cantidad, producto[2], producto[3])
-        prepared = session.prepare("INSERT INTO compras_detalle " +
+        prepared = session.prepare("INSERT INTO pedidos " +
     								"(usuario_id, factura, fecha_compra, codigo_referencia, nombre_producto, cantidad, precio_producto, importe, url_imagen) " + 
     								"VALUES (?, ?, ?, ?, ?, ?, ?," + "{:0.2f}".format(importe) + ", ? )")
         batch.add(prepared, tupla_cd)
@@ -80,9 +80,5 @@ for usuario in usuarios:
         session.execute(prepared, (cantidad, producto[0]))
 
     # Compra
-    sentencia = session.prepare("INSERT INTO compras " +
-  								"(usuario_id, factura, fecha_compra, importe) " + 
-  								"VALUES (?, ?, ?, " + "{:0.2f}".format(importe) + " )")
-    batch.add(sentencia, (usuario.usuario_id, factura, fecha))
     session.execute(batch)
     

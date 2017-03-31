@@ -17,5 +17,6 @@ for nombre in ['Angel', 'Emilio', 'Carla', 'Alonso']:
 		tipo_calle = random.choice(['Calle', 'Avenida', 'Plaza'])
 		calle = random.choice(ascii_uppercase) + ''.join(random.choice(ascii_lowercase) for _ in range(random.randint(5, 12)))
 		direccion = tipo_calle + " de " + calle + ", " + str(numero)
-		sentencia = session.prepare("INSERT INTO usuarios (usuario_id, nombre, apellidos, direccion ) VALUES (uuid(), ?, ?, ? )")
-		session.execute(sentencia, (nombre, apellidos, direccion))
+		email = nombre.lower() + "@" + ''.join(random.choice(ascii_lowercase) for _ in range(random.randint(8, 12))) + ".com"
+		sentencia = session.prepare("INSERT INTO usuarios (usuario_id, nombre, apellidos, direccion, email ) VALUES (uuid(), ?, ?, ?, ? )")
+		session.execute(sentencia, (nombre, apellidos, direccion, email))

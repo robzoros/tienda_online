@@ -11,10 +11,15 @@ CREATE TABLE tienda_online.usuarios (
   usuario_id UUID PRIMARY KEY,
   nombre TEXT,
   apellidos TEXT,
-  direccion TEXT
+  direccion TEXT,
+  email TEXT
 );
 
--- Últimos productos visitados por un usuario
+-- Últimos productos visitados por un usuario. Cada vez que un usuario visite un producto
+-- se creará un registro en la tabla.
+-- Dado que un mismo producto puede estar varias veces entre los más recientes visitados
+-- habrá que ir recorriendo la tabla hasta que se encuentren los N productos visitados
+-- más recientes (con paginación).
 CREATE TABLE tienda_online.productos_visitados (
   usuario_id UUID,
   codigo_referencia UUID,
@@ -25,7 +30,7 @@ CREATE TABLE tienda_online.productos_visitados (
   PRIMARY KEY(usuario_id, fecha_ultima_visita, codigo_referencia)
 );
 
--- carro de un usuario, al pasarlo a compras se deberá borrar
+-- carro de un usuario, al finalizar el pedido se deberá borrar el registro.
 CREATE TABLE tienda_online.carro (
   usuario_id  UUID,
   codigo_referencia UUID,
@@ -37,18 +42,26 @@ CREATE TABLE tienda_online.carro (
   PRIMARY KEY(usuario_id, codigo_referencia)
 );
 
--- Listado de compras
-CREATE TABLE tienda_online.compras (
-  usuario_id  UUID,
-  factura TEXT,
-  fecha_compra TIMESTAMP,
-  importe DECIMAL,
-  PRIMARY KEY(usuario_id, fecha_compra, factura)
-) WITH CLUSTERING ORDER BY (fecha_compra DESC);
+-- Para obtener datos de las compras de un usuario existen se piden tres queries:
+-- 1.- Detalle de la última compra (acceso por usuario y ordenado por fecha)
+-- 2.- Lista de últimas compras (acceso por usuario y ordenado por fecha) 
+-- 3.- Detalle de un pedido (acceso por factura)
+-- Existe una cuarta query que es el detalle de la compra recién realizada que puede
+-- considerarse como el mismo caso que la query anterior.
 
--- Listado de compras detalle
-CREATE TABLE tienda_online.compras_detalle (
-  usuario_id  UUID STATIC,
+-- Elegimos usuario_id como PARTITION KEY de las tablas de compras para poder ordenar
+-- por fecha de compra que será la primera CLUSTERING column. La PRIMARY KEY también
+-- estará formada por el código de la factura y el código del producto.
+-- Si el código de factura se construyera a partir de la fecha en un formato que
+-- permitiera su ordenación, la fecha de factura no sería necesaria en la clave.
+-- Para el problema suponemos que la factura no es ordenable.
+-- Las tres queries pueden ser resueltas con la misma tabla ya que  para la tercera
+-- query podremos acceder por usuario, fecha y factura que son conocidos en el momento
+-- de la consulta.
+
+-- Tabla de Pedidos de usuario
+CREATE TABLE tienda_online.pedidos (
+  usuario_id  UUID,
   factura TEXT,
   fecha_compra TIMESTAMP,
   codigo_referencia UUID,
@@ -57,8 +70,8 @@ CREATE TABLE tienda_online.compras_detalle (
   url_imagen TEXT,
   cantidad INT,
   importe DECIMAL static,
-  PRIMARY KEY(factura, codigo_referencia)
-);
+  PRIMARY KEY(usuario_id, fecha_compra, factura, codigo_referencia)
+) WITH CLUSTERING ORDER BY (fecha_compra DESC);
 -- *************************************************
 -- FIN USUARIOS Y COMPRAS
 -- *************************************************
