@@ -79,5 +79,9 @@ for usuario in usuarios:
         session.execute(prepared, (cantidad, producto[0]))
 
     # Compra
+    sentencia = session.prepare("INSERT INTO compras " +
+                  "(usuario_id, factura, fecha_compra, importe) " + 
+                  "VALUES (?, ?, ?, " + "{:0.2f}".format(importe) + " )")
+    batch.add(sentencia, (usuario.usuario_id, factura, fecha))
     session.execute(batch)
     

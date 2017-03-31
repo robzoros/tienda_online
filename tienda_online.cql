@@ -49,7 +49,7 @@ CREATE TABLE tienda_online.carro (
 -- Existe una cuarta query que es el detalle de la compra recién realizada que puede
 -- considerarse como el mismo caso que la query anterior.
 
--- Elegimos usuario_id como PARTITION KEY de las tablas de compras para poder ordenar
+-- Elegimos usuario_id como PARTITION KEY de la tablas de pedidos para poder ordenar
 -- por fecha de compra que será la primera CLUSTERING column. La PRIMARY KEY también
 -- estará formada por el código de la factura y el código del producto.
 -- Si el código de factura se construyera a partir de la fecha en un formato que
@@ -58,6 +58,18 @@ CREATE TABLE tienda_online.carro (
 -- Las tres queries pueden ser resueltas con la misma tabla ya que  para la tercera
 -- query podremos acceder por usuario, fecha y factura que son conocidos en el momento
 -- de la consulta.
+
+-- Necesitaremos dos tablas, una para recuperar las últimas compras y
+-- otra tabla con el detalle de cada pedido.
+
+-- Tabla "maestra" de compras de usuarios
+CREATE TABLE tienda_online.compras (
+  usuario_id  UUID,
+  factura TEXT,
+  fecha_compra TIMESTAMP,
+  importe DECIMAL,
+  PRIMARY KEY(usuario_id, fecha_compra, factura)
+) WITH CLUSTERING ORDER BY (fecha_compra DESC);
 
 -- Tabla de Pedidos de usuario
 CREATE TABLE tienda_online.pedidos (
