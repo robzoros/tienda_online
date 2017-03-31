@@ -16,7 +16,8 @@ end = datetime.strptime('4/1/2017 7:30 PM', '%m/%d/%Y %I:%M %p')
 # Producto cartesiano de tuplas para salvar productos relacionados
 # Función que rellena una lista de productos y luego llama a la función productoCartesiano para obtener la lista definitiva.
 def tuplas_producto(session, factura):
-  productos = session.execute("SELECT codigo_referencia FROM pedidos WHERE factura = '" + factura.factura + "'")
+  sentencia = session.prepare("SELECT codigo_referencia FROM pedidos WHERE usuario_id = ? AND fecha_compra = ? AND factura = ?")
+  productos = session.execute(sentencia, (factura.usuario_id, factura.fecha_compra, factura.factura))
   lista_prod = []
   for producto in productos:
     lista_prod.append(producto.codigo_referencia)

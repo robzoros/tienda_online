@@ -11,7 +11,7 @@ session.execute("TRUNCATE contador_prod_vendidos_juntos")
 #******************************************************
 
 # Recorremos todas los pedidos
-facturas = session.execute("SELECT factura FROM pedidos")
+facturas = session.execute("SELECT * FROM pedidos")
 
 for factura in facturas:
   #obtenemos todos los productos de la compra y creamos una lista de tuplas producto = producto relacionado
