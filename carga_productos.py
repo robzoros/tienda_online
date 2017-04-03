@@ -56,9 +56,9 @@ for i in range(100):
 	tag_marketing = random.choice(tags_marketing)
 
 	batch = BatchStatement(BatchType.LOGGED)
-	prepared = session.prepare("INSERT INTO productos (codigo_referencia, nombre_producto, alta_producto, precio_producto, descripcion, url_imagen, categoria)" +
-		                         " VALUES (?, ?, ?, " + "{:0.2f}".format(precio_producto) + ", ?, ?, ?)")
-	batch.add(prepared, (codigo_referencia, nombre_producto, alta_producto, descripcion, url_imagen, categoria))
+	prepared = session.prepare("INSERT INTO productos (codigo_referencia, nombre_producto, alta_producto, precio_producto, descripcion, url_imagen, categoria, nombre_categoria)" +
+		                         " VALUES (?, ?, ?, " + "{:0.2f}".format(precio_producto) + ", ?, ?, ?, ?)")
+	batch.add(prepared, (codigo_referencia, nombre_producto, alta_producto, descripcion, url_imagen, categoria, nombre_categoria))
 	prepared = session.prepare("INSERT INTO productos_por_marketing " + 
 														 "(codigo_referencia, timestamp_marketing, tag_marketing, nombre_producto, " + 
 		                         " precio_producto, url_imagen) VALUES (?, ?, ?, ?, " + "{:0.2f}".format(precio_producto) + ", ?)")

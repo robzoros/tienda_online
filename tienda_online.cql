@@ -30,7 +30,8 @@ CREATE TABLE tienda_online.productos_visitados (
   PRIMARY KEY(usuario_id, fecha_ultima_visita, codigo_referencia)
 );
 
--- carro de un usuario, al finalizar el pedido se deberá borrar el registro.
+-- Carro de un usuario, al finalizar el pedido se deberán borrar los registros
+-- del usuario.
 CREATE TABLE tienda_online.carro (
   usuario_id  UUID,
   codigo_referencia UUID,
@@ -42,7 +43,7 @@ CREATE TABLE tienda_online.carro (
   PRIMARY KEY(usuario_id, codigo_referencia)
 );
 
--- Para obtener datos de las compras de un usuario existen se piden tres queries:
+-- Para obtener datos de las compras de un usuario se piden tres queries:
 -- 1.- Detalle de la última compra (acceso por usuario y ordenado por fecha)
 -- 2.- Lista de últimas compras (acceso por usuario y ordenado por fecha) 
 -- 3.- Detalle de un pedido (acceso por factura)
@@ -71,7 +72,7 @@ CREATE TABLE tienda_online.compras (
   PRIMARY KEY(usuario_id, fecha_compra, factura)
 ) WITH CLUSTERING ORDER BY (fecha_compra DESC);
 
--- Tabla de Pedidos de usuario
+-- Tabla de Pedidos de usuario, particionada por factura.
 CREATE TABLE tienda_online.pedidos (
   usuario_id  UUID,
   factura TEXT,
@@ -82,8 +83,8 @@ CREATE TABLE tienda_online.pedidos (
   url_imagen TEXT,
   cantidad INT,
   importe DECIMAL static,
-  PRIMARY KEY(usuario_id, fecha_compra, factura, codigo_referencia)
-) WITH CLUSTERING ORDER BY (fecha_compra DESC);
+  PRIMARY KEY(factura, codigo_referencia)
+);
 -- *************************************************
 -- FIN USUARIOS Y COMPRAS
 -- *************************************************
@@ -99,8 +100,9 @@ CREATE TABLE tienda_online.pedidos (
 -- Alta producto es un bucket que se ajusta a la periodicidad de alta de nuevos productos
 -- Si se añaden muchos productos diariamente el bucket podría ser un Date. En otros casos
 -- el Bucket podría ser semanal o mensual
--- Nombre producto y descripción son un de tipo MAP que tendrán el formato KEY, VALUE en el
--- que KEY será el código de idioma según ISO 639-1 y VALUE el producto o la descripción en dicho idioma.
+-- Nombre producto, descripción y nombre categoria son un de tipo MAP que tendrán el 
+-- formato KEY, VALUE en el que KEY será el código de idioma según ISO 639-1 y VALUE 
+-- el producto o la descripción en dicho idioma.
 CREATE TABLE tienda_online.productos (
   codigo_referencia TIMEUUID,
   alta_producto TEXT,
@@ -109,6 +111,7 @@ CREATE TABLE tienda_online.productos (
   descripcion MAP<TEXT, TEXT>,
   url_imagen TEXT,
   categoria UUID,
+  nombre_categoria MAP<TEXT, TEXT>,
   PRIMARY KEY(codigo_referencia)
 );
 
@@ -152,15 +155,22 @@ CREATE TABLE tienda_online.contador_productos_vendidos	 (
 	PRIMARY KEY(codigo_referencia)
 );
 
--- Tabla con los productos más vendidos (sólo tendría los N productos más vendidos 
--- siendo N un número determinado por negocio, en nuestro caso 8, pero que sería parametrizable)
+-- Tabla con los productos más vendidos. 
+-- Esta tabla tendría los N productos más vendidos siendo N un número determinado por negocio, 
+-- en nuestro caso 8, pero que sería parametrizable.
+-- Dado que a esta tabla accederían todos los clientes, para evitar un posible "hot spot" se
+-- añade un campo semilla. La idea es que el proceso creará copias de la tabla numeradas 
+-- desde el 1 hasta un número conocido por el sistema (que coincida en la medida de lo posible
+-- con el número de nodos de Cassandra). El acceso de los clientes se hará de manera aleatoria
+-- a una de las semillas.
 CREATE TABLE tienda_online.productos_mas_vendidos	 (
+  semilla INT,
   codigo_referencia TIMEUUID,
   nombre_producto MAP<TEXT, TEXT>,
   precio_producto DECIMAL,
   url_imagen TEXT,
 	numero_ventas bigint, 
-	PRIMARY KEY(codigo_referencia)
+	PRIMARY KEY(semilla, codigo_referencia)
 );
 
 -- En el Caso de obtener los productos que más se han vendido junto a un determinado 
@@ -209,10 +219,9 @@ CREATE TABLE tienda_online.productos_vendidos_juntos	 (
 
 -- Tabla con los productos por categoría. Las consultas que el caso propone
 -- son ordenadas por nombre o por precio por lo que en principio esta
--- tabla sería redundante. Sin embargo considero que es la mejor candidata 
--- para tabla "madre" de las vistas materializadas proporcionando además
--- la posibilidad de una consulta ordenada por fecha de alta del producto 
--- por si fuera necesaria en el futuro.
+-- tabla sería redundante. Sin embargo esta tabla proporciona dos ventajas:
+-- facilita la creación de las vistas materializadas y posibilita una consulta
+-- ordenada por fecha de alta del producto por si fuera necesaria en el futuro.
 -- Los campos con el nombre de la categoría podrían ser static. Sin embargo 
 -- tenemos la limitación de que no podríamos replicarlos en las vistas materializadas,
 CREATE TABLE tienda_online.categorias (

@@ -17,9 +17,10 @@ result = session.execute('SELECT * FROM contador_productos_vendidos')
 productos_vendidos = sorted(result, key=lambda p: -1 * p.numero_ventas)[0:8]
 for producto in productos_vendidos:
     prod = session.execute('SELECT * FROM productos WHERE codigo_referencia = ' + str(producto.codigo_referencia))[0]
-    prepared = session.prepare("INSERT INTO productos_mas_vendidos (codigo_referencia, nombre_producto, precio_producto, url_imagen, numero_ventas)" +
-                                 " VALUES (?, ?, " + "{:0.2f}".format(prod.precio_producto) + ", ?, ?)")
-    session.execute(prepared, (prod.codigo_referencia, prod.nombre_producto, prod.url_imagen, producto.numero_ventas))
+    for contador in range(10):
+        prepared = session.prepare("INSERT INTO productos_mas_vendidos (semilla, codigo_referencia, nombre_producto, precio_producto, url_imagen, numero_ventas)" +
+                                     " VALUES (?, ?, ?, " + "{:0.2f}".format(prod.precio_producto) + ", ?, ?)")
+        session.execute(prepared, (contador, prod.codigo_referencia, prod.nombre_producto, prod.url_imagen, producto.numero_ventas))
 
 
 productos = session.execute('SELECT * FROM productos')
