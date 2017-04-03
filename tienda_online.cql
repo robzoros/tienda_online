@@ -1,5 +1,3 @@
-DROP KEYSPACE tienda_online;
--- CREAMOS KEYSPACE DE LA APLICACION
 CREATE KEYSPACE tienda_online
 WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };
 
